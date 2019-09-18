@@ -114,7 +114,9 @@ valgrind: vendor libnewrelic.a
 # the static library and have gcc wrap it in the appropriate shared library
 # goop.
 libnewrelic.so: libnewrelic.a
-	$(CC) -shared -pthread -o $@ -Wl,--whole-archive $^ -Wl,--no-whole-archive $(PCRE_LIBS) -ldl
+	$(AR) -x $<
+	$(CC) -shared -pthread -o $@ *.o $(PCRE_LIBS) -ldl
+	rm -f *.o
 
 .PHONY: src-static
 src-static:
