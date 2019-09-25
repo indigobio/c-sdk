@@ -9,6 +9,8 @@ Makefile_*.deps
 *.T
 releases
 .DS_Store
+*~
+/__.SYMDEF SORTED
 
 #
 # Byproducts from building Doxygen documentation
