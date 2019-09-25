@@ -5,7 +5,7 @@
 #
 # Useful top level targets:
 #
-# - all:       Builds libnewrelic.a and newrelic-daemon
+# - all:       Builds newrelic-daemon, libnewrelic.a, and libnewrelic.so
 # - clean:     Removes all build products
 # - daemon:    Builds newrelic-daemon
 # - dynamic:   Builds libnewrelic.so
@@ -40,7 +40,8 @@ VERSION_FLAGS += -DNEWRELIC_VERSION=$(AGENT_VERSION)
 
 export AGENT_VERSION VERSION_FLAGS
 
-all: libnewrelic.a newrelic-daemon
+.PHONY: all
+all: newrelic-daemon libnewrelic.a libnewrelic.so
 
 ifeq (Darwin,$(UNAME))
 #
@@ -50,14 +51,14 @@ ifeq (Darwin,$(UNAME))
 #
 LIBTOOL := /usr/bin/libtool
 
-libnewrelic.a: axiom src-static
+libnewrelic.a: vendor/newrelic/axiom/libaxiom.a src/libnewrelic.a
 	$(LIBTOOL) -static -o $@ vendor/newrelic/axiom/libaxiom.a src/libnewrelic.a
 else
 #
 # This rule builds a static axiom library and a static C SDK library, and
 # then uses GNU ar's MRI support to smoosh them together into a single,
 # beautiful library.
-libnewrelic.a: make/combine.mri axiom src-static
+libnewrelic.a: make/combine.mri vendor/newrelic/axiom/libaxiom.a src/libnewrelic.a
 	$(AR) -M < $<
 endif
 
@@ -80,9 +81,6 @@ tests: vendor libnewrelic.a
 vendor:
 	$(MAKE) -C vendor
 
-.PHONY: axiom vendor/newrelic/axiom/libaxiom.a
-axiom: vendor/newrelic/axiom/libaxiom.a
-
 vendor/newrelic/axiom/libaxiom.a: export CFLAGS := $(C_AGENT_CFLAGS) -DNR_CAGENT
 vendor/newrelic/axiom/libaxiom.a:
 	$(MAKE) -C vendor/newrelic/axiom
@@ -91,6 +89,7 @@ vendor/newrelic/axiom/libaxiom.a:
 axiom-clean:
 	$(MAKE) -C vendor/newrelic/axiom clean
 
+.PHONY: daemon
 daemon: newrelic-daemon
 
 newrelic-daemon:
@@ -118,8 +117,7 @@ libnewrelic.so: libnewrelic.a
 	$(CC) -shared -pthread -o $@ *.o $(PCRE_LIBS) -ldl
 	rm -f *.o
 
-.PHONY: src-static
-src-static:
+src/libnewrelic.a:
 	$(MAKE) -C src static
 
 .PHONY: src-clean
